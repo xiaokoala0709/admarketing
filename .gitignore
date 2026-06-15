@@ -5,3 +5,5 @@ __pycache__/
 *.pyc
 .env
 .DS_Store
+backend/.env.save
+backend/终端存储的输出.env.txt
