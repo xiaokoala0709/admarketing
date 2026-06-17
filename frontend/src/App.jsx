@@ -1,3 +1,5 @@
+import { SignIn, useUser, UserButton } from '@clerk/react'
+import { WHITELIST } from './whitelist'
 import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -1605,5 +1607,34 @@ function AppShell() {
 }
 
 export default function App() {
-  return <AppShell />
+  const { isLoaded, isSignedIn, user } = useUser()
+
+  if (!isLoaded) return <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh'}}>加载中...</div>
+
+  if (!isSignedIn) return (
+    <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh'}}>
+      <SignIn />
+    </div>
+  )
+
+  const email = user?.primaryEmailAddress?.emailAddress || ''
+  if (!WHITELIST.includes(email)) return (
+    <div style={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100vh',gap:'16px',padding:'24px',textAlign:'center'}}>
+      <h2>申请试用 AdaMarketing</h2>
+      <p>感谢你的关注！本产品目前为邀请制试用。</p>
+      <p>请发送邮件至 <strong>wpwapple0709@126.com</strong> 申请开通，并附上你的登录邮箱：</p>
+      <p style={{padding:'8px 16px',background:'#f5f5f5',borderRadius:'8px'}}>{email}</p>
+      <p style={{color:'#888',fontSize:'14px'}}>开通后刷新页面即可使用</p>
+      <UserButton />
+    </div>
+  )
+
+  return (
+    <div style={{position:'relative'}}>
+      <div style={{position:'fixed',top:'12px',right:'16px',zIndex:999}}>
+        <UserButton />
+      </div>
+      <AppShell />
+    </div>
+  )
 }
