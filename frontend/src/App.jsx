@@ -1622,7 +1622,7 @@ export default function App() {
     <div style={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100vh',gap:'16px',padding:'24px',textAlign:'center'}}>
       <h2>申请试用 AdaMarketing</h2>
       <p>感谢你的关注！本产品目前为邀请制试用。</p>
-      <p>请发送邮件至 <strong>wpwapple0709@126.com</strong> 申请开通，并附上你的登录邮箱：</p>
+      <p>请发送邮件至 <strong>xiaokoala0709@gmail.com</strong> 申请开通，并附上你的登录邮箱：</p>
       <p style={{padding:'8px 16px',background:'#f5f5f5',borderRadius:'8px'}}>{email}</p>
       <p style={{color:'#888',fontSize:'14px'}}>开通后刷新页面即可使用</p>
       <UserButton />
