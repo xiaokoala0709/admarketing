@@ -1631,8 +1631,8 @@ export default function App() {
 
   return (
     <div style={{position:'relative'}}>
-      <div style={{position:'fixed',top:'12px',right:'16px',zIndex:999}}>
-        <UserButton />
+      <div style={{position:'fixed',top:'18px',right:'24px',zIndex:999}}>
+        <UserButton appearance={{ elements: { avatarBox: { width: '32px', height: '32px' } } }} />
       </div>
       <AppShell />
     </div>
