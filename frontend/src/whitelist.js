@@ -1,3 +1,3 @@
 export const WHITELIST = [
-  "你自己的邮箱@gmail.com",
+  "xiaokoala0709@gmail.com",
 ]
