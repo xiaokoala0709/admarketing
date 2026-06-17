@@ -12,7 +12,7 @@ class Settings:
 
     @property
     def cors_origins(self) -> list[str]:
-        return [self.frontend_origin]
+        return [origin.strip() for origin in self.frontend_origin.split(",") if origin.strip()]
 
     @property
     def anthropic_api_key(self) -> str:
