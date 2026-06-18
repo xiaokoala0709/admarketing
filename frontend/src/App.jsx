@@ -1631,9 +1631,9 @@ export default function App() {
 
   return (
     <div style={{position:'relative'}}>
-      <div style={{position:'fixed',top:'16px',right:'24px',zIndex:999,transform:'scale(0.8)',transformOrigin:'top right'}}>
-        <UserButton />
-      </div>
+      <div style={{position:'fixed',top:'16px',right:'24px',zIndex:999}}>
+  <UserButton />
+</div>
       <AppShell />
     </div>
   )
