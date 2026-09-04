@@ -322,6 +322,9 @@ def _priority_node_to_entry(node: dict[str, Any]) -> dict[str, str]:
 
 
 def _build_live_hotspots() -> list[TodayHotspot]:
+    key_len = len(settings.tophub_access_key)
+    _note(f"TOPHUB_ACCESS_KEY 状态: has_tophub_key={settings.has_tophub_key}, 长度={key_len}")
+
     calendar_nodes = get_today_calendar_nodes()
     _note(f"运营日历命中 {len(calendar_nodes)} 个节点: {[n['name'] for n in calendar_nodes]}")
 
@@ -431,5 +434,7 @@ def refresh_today_hotspots() -> TodayHotspotsResponse:
         generated_at=generated_at,
         debug_notes=list(_diagnostics),
     )
+
+
 
 
