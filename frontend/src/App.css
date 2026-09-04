@@ -216,6 +216,42 @@
   margin: 14px 0 0;
 }
 
+.hotspot-refresh-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.hotspot-refresh-button {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 6px;
+  border: 1px solid var(--color-accent);
+  background: #fff;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hotspot-refresh-button:hover:not(:disabled) {
+  background: var(--color-agent1-bg);
+}
+
+.hotspot-refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.hotspot-refresh-status {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 .section-heading p,
 .trend-card__category,
 .output-block p,
@@ -398,6 +434,7 @@
   height: 16px;
   border-radius: 50%;
   color: #fff;
+  background: var(--color-text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -425,6 +462,22 @@
 
 .platform__icon--B站 {
   background: #00a1d6;
+}
+
+.platform__icon--知乎 {
+  background: #1a56db;
+}
+
+.platform__icon--百度 {
+  background: #2932e1;
+}
+
+.platform__icon--今日头条 {
+  background: #f42c24;
+}
+
+.platform__icon--运营日历 {
+  background: var(--color-accent);
 }
 
 .trend-card__category {

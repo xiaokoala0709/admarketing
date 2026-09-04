@@ -35,6 +35,18 @@ export const NODE_THEME_MAP = {
     border: '#E0DDD6',
     icon: '趋',
   },
+  exhibition: {
+    bg: '#F1EAFB',
+    text: '#6B3FA0',
+    border: '#D9C6EE',
+    icon: '展',
+  },
+  film_release: {
+    bg: '#FDEAF3',
+    text: '#B23875',
+    border: '#F3C4DD',
+    icon: '影',
+  },
 }
 
 export function getNodeTheme(nodeType) {
@@ -49,13 +61,25 @@ export function mapPlatformMark(platform) {
     return '抖'
   }
   if (platform === '微博') {
-    return '微'
+    return '博'
   }
   if (platform === '微信') {
-    return '微'
+    return '信'
   }
   if (platform === 'B站') {
     return 'B'
+  }
+  if (platform === '知乎') {
+    return '知'
+  }
+  if (platform === '百度') {
+    return '度'
+  }
+  if (platform === '今日头条') {
+    return '头'
+  }
+  if (platform === '运营日历') {
+    return '历'
   }
   return '热'
 }

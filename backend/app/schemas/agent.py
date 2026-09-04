@@ -95,6 +95,8 @@ class TodayHotspot(BaseModel):
         "ecommerce_node",
         "international_festival",
         "lifestyle_trend",
+        "exhibition",
+        "film_release",
     ]
     node_label: str
 
@@ -102,6 +104,7 @@ class TodayHotspot(BaseModel):
 class TodayHotspotsResponse(BaseModel):
     hotspots: list[TodayHotspot]
     source: str = "simulated"
+    generated_at: str | None = None
 
 
 class AgentRunRequest(BaseModel):

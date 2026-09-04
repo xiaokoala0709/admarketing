@@ -49,5 +49,13 @@ class Settings:
     def has_image_api_key(self) -> bool:
         return bool(self.image_api_key)
 
+    @property
+    def tophub_access_key(self) -> str:
+        return os.getenv("TOPHUB_ACCESS_KEY", "").strip()
+
+    @property
+    def has_tophub_key(self) -> bool:
+        return bool(self.tophub_access_key)
+
 
 settings = Settings()

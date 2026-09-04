@@ -234,6 +234,13 @@ export async function fetchTodayHotspots() {
   return parseResponse(response)
 }
 
+export async function refreshTodayHotspots() {
+  const response = await fetch(`${API_BASE_URL}/api/hotspots/refresh`, {
+    method: 'POST',
+  })
+  return parseResponse(response)
+}
+
 export async function runAgent(agentName, payload) {
   const response = await fetch(`${API_BASE_URL}/api/agents/${agentName}/run`, {
     method: 'POST',

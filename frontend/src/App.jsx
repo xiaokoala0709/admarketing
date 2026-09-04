@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import NodePill from './NodePill'
 import { mapPlatformMark } from './nodeThemes'
-import { fetchTodayHotspots, generateBrandAssetBrief, generateImage, runAgent } from './api/agents'
+import { fetchTodayHotspots, generateBrandAssetBrief, generateImage, refreshTodayHotspots, runAgent } from './api/agents'
 import './App.css'
 
 function formatCurrentDate(date = new Date()) {
@@ -13,6 +13,21 @@ function formatCurrentDate(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}.${month}.${day}`
+}
+
+function formatGeneratedAt(isoString) {
+  if (!isoString) {
+    return ''
+  }
+
+  try {
+    return new Date(isoString).toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return ''
+  }
 }
 
 const currentNode = {
@@ -504,6 +519,23 @@ function BriefPage({
               </button>
             )
           })}
+        </div>
+
+        <div className="hotspot-refresh-row">
+          <button
+            type="button"
+            className="hotspot-refresh-button"
+            onClick={handleRefreshHotspots}
+            disabled={hotspotsRefreshing}
+          >
+            {hotspotsRefreshing ? '更新中' : '更新'}
+          </button>
+          <div className="hotspot-refresh-status">
+            {hotspotsSource === 'live' && hotspotsGeneratedAt
+              ? `已获取真实热点 · ${formatGeneratedAt(hotspotsGeneratedAt)} 更新`
+              : '当前为示例热点，点击"更新"获取真实数据'}
+            {hotspotsError ? ` · ${hotspotsError}` : ''}
+          </div>
         </div>
       </section>
 
@@ -1424,6 +1456,9 @@ function AppShell() {
   const [briefError, setBriefError] = useState('')
   const [hotspots, setHotspots] = useState(todayHotspots)
   const [hotspotsSource, setHotspotsSource] = useState('simulated')
+  const [hotspotsGeneratedAt, setHotspotsGeneratedAt] = useState(null)
+  const [hotspotsRefreshing, setHotspotsRefreshing] = useState(false)
+  const [hotspotsError, setHotspotsError] = useState('')
   const [copied, setCopied] = useState(false)
   const [campaignRole, setCampaignRole] = useState('brand')
   const [campaignBrandForm, setCampaignBrandForm] = useState(defaultCampaignBrandForm)
@@ -1478,6 +1513,7 @@ function AppShell() {
         if (normalizedHotspots.length) {
           setHotspots(normalizedHotspots)
           setHotspotsSource(data?.source || 'simulated')
+          setHotspotsGeneratedAt(data?.generated_at || null)
           if (!normalizedHotspots.some((item) => item.id === selectedId)) {
             setSelectedId(null)
           }
@@ -1489,12 +1525,45 @@ function AppShell() {
         }
         setHotspots(todayHotspots)
         setHotspotsSource('simulated')
+        setHotspotsGeneratedAt(null)
       })
 
     return () => {
       active = false
     }
   }, [selectedId])
+
+  async function handleRefreshHotspots() {
+    setHotspotsRefreshing(true)
+    setHotspotsError('')
+
+    try {
+      const data = await refreshTodayHotspots()
+      const normalizedHotspots = Array.isArray(data?.hotspots)
+        ? data.hotspots.map((item) => ({
+            ...item,
+            platformMark: mapPlatformMark(item.platform),
+          }))
+        : []
+
+      if (normalizedHotspots.length) {
+        setHotspots(normalizedHotspots)
+        setHotspotsSource(data?.source || 'simulated')
+        setHotspotsGeneratedAt(data?.generated_at || null)
+        if (!normalizedHotspots.some((item) => item.id === selectedId)) {
+          setSelectedId(null)
+        }
+      }
+
+      if (data?.source !== 'live') {
+        setHotspotsError('本次未获取到真实热点，已展示示例内容，可稍后再试')
+      }
+    } catch (error) {
+      setHotspotsError(error?.message || '更新失败，请稍后再试')
+    } finally {
+      setHotspotsRefreshing(false)
+    }
+  }
 
   return (
     <div className="adamarketing-app">
