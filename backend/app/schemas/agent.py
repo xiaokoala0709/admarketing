@@ -105,6 +105,7 @@ class TodayHotspotsResponse(BaseModel):
     hotspots: list[TodayHotspot]
     source: str = "simulated"
     generated_at: str | None = None
+    debug_notes: list[str] | None = None
 
 
 class AgentRunRequest(BaseModel):
@@ -118,3 +119,4 @@ class AgentRunResponse(BaseModel):
     status: str
     output: str | CampaignOutput | HotspotOutput | BrandAssetBriefOutput | ImageGenerateOutput
     metadata: dict[str, Any] = Field(default_factory=dict)
+
