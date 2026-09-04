@@ -199,9 +199,10 @@ def _fetch_from_tophub(client: httpx.Client, platform: str) -> list[dict[str, st
         _note(f"tophub 抓取失败 [{platform}]: {type(exc).__name__}: {exc}")
         return []
 
-    raw_items = payload.get("data", {}).get("items") if isinstance(payload, dict) else None
+    data_field = payload.get("data") if isinstance(payload, dict) else None
+    raw_items = data_field.get("items") if isinstance(data_field, dict) else None
     if not isinstance(raw_items, list):
-        _note(f"tophub 返回格式异常 [{platform}]: {type(payload).__name__}")
+        _note(f"tophub 返回格式异常 [{platform}]: {json.dumps(payload, ensure_ascii=False)[:300]}")
         return []
 
     items: list[dict[str, str]] = []
@@ -231,7 +232,7 @@ def _fetch_from_dailyhot(client: httpx.Client, source: dict[str, str | None]) ->
 
     raw_items = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(raw_items, list):
-        _note(f"DailyHotApi 返回格式异常 [{path}]: {type(payload).__name__}")
+        _note(f"DailyHotApi 返回格式异常 [{path}]: {json.dumps(payload, ensure_ascii=False)[:300]}")
         return []
 
     items: list[dict[str, str]] = []
@@ -434,6 +435,8 @@ def refresh_today_hotspots() -> TodayHotspotsResponse:
         generated_at=generated_at,
         debug_notes=list(_diagnostics),
     )
+
+
 
 
 
