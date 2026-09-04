@@ -216,12 +216,11 @@
   margin: 14px 0 0;
 }
 
-.hotspot-refresh-row {
+.hotspot-title-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-  margin-top: 20px;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .hotspot-refresh-button {
@@ -248,6 +247,7 @@
 }
 
 .hotspot-refresh-status {
+  margin-top: 10px;
   font-size: 12px;
   color: var(--color-text-muted);
 }
@@ -444,39 +444,39 @@
   flex-shrink: 0;
 }
 
-.platform__icon--小红书 {
+.platform__icon--灏忕孩涔� {
   background: #ff2442;
 }
 
-.platform__icon--抖音 {
+.platform__icon--鎶栭煶 {
   background: #000000;
 }
 
-.platform__icon--微博 {
+.platform__icon--寰崥 {
   background: #e6162d;
 }
 
-.platform__icon--微信 {
+.platform__icon--寰俊 {
   background: #07c160;
 }
 
-.platform__icon--B站 {
+.platform__icon--B绔� {
   background: #00a1d6;
 }
 
-.platform__icon--知乎 {
+.platform__icon--鐭ヤ箮 {
   background: #1a56db;
 }
 
-.platform__icon--百度 {
+.platform__icon--鐧惧害 {
   background: #2932e1;
 }
 
-.platform__icon--今日头条 {
+.platform__icon--浠婃棩澶存潯 {
   background: #f42c24;
 }
 
-.platform__icon--运营日历 {
+.platform__icon--杩愯惀鏃ュ巻 {
   background: var(--color-accent);
 }
 
