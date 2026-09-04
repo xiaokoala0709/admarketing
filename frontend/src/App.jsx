@@ -419,6 +419,11 @@ function BriefPage({
   briefError,
   setBriefError,
   hotspots,
+  hotspotsSource,
+  hotspotsGeneratedAt,
+  hotspotsRefreshing,
+  hotspotsError,
+  handleRefreshHotspots,
   copied,
   setCopied,
 }) {
@@ -1608,6 +1613,11 @@ function AppShell() {
               briefError={briefError}
               setBriefError={setBriefError}
               hotspots={hotspots}
+              hotspotsSource={hotspotsSource}
+              hotspotsGeneratedAt={hotspotsGeneratedAt}
+              hotspotsRefreshing={hotspotsRefreshing}
+              hotspotsError={hotspotsError}
+              handleRefreshHotspots={handleRefreshHotspots}
               copied={copied}
               setCopied={setCopied}
             />
