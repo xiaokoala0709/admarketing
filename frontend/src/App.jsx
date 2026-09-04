@@ -490,8 +490,24 @@ function BriefPage({
     <main className="page-shell page-body">
       <section className="trends-column">
         <div className="page-title-block section-heading">
-          <h1>热点速递站</h1>
+          <div className="hotspot-title-row">
+            <h1>热点速递站</h1>
+            <button
+              type="button"
+              className="hotspot-refresh-button"
+              onClick={handleRefreshHotspots}
+              disabled={hotspotsRefreshing}
+            >
+              {hotspotsRefreshing ? '更新中' : '更新'}
+            </button>
+          </div>
           <p>从今天值得关注的话题中，挑一个适合品牌借势表达的入口。</p>
+          <div className="hotspot-refresh-status">
+            {hotspotsSource === 'live' && hotspotsGeneratedAt
+              ? `已获取真实热点 · ${formatGeneratedAt(hotspotsGeneratedAt)} 更新`
+              : '当前为示例热点，点击"更新"获取真实数据'}
+            {hotspotsError ? ` · ${hotspotsError}` : ''}
+          </div>
         </div>
 
         <div className="trend-list">
@@ -524,23 +540,6 @@ function BriefPage({
               </button>
             )
           })}
-        </div>
-
-        <div className="hotspot-refresh-row">
-          <button
-            type="button"
-            className="hotspot-refresh-button"
-            onClick={handleRefreshHotspots}
-            disabled={hotspotsRefreshing}
-          >
-            {hotspotsRefreshing ? '更新中' : '更新'}
-          </button>
-          <div className="hotspot-refresh-status">
-            {hotspotsSource === 'live' && hotspotsGeneratedAt
-              ? `已获取真实热点 · ${formatGeneratedAt(hotspotsGeneratedAt)} 更新`
-              : '当前为示例热点，点击"更新"获取真实数据'}
-            {hotspotsError ? ` · ${hotspotsError}` : ''}
-          </div>
         </div>
       </section>
 
@@ -1717,3 +1716,4 @@ export default function App() {
     </div>
   )
 }
+
