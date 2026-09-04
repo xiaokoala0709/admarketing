@@ -138,6 +138,15 @@ PRIORITY_SLOT_CAP = 2  # 日历节点 + 展会/影视/春秋假 最多占用几�
 
 _cache: dict[str, Any] = {"date": None, "hotspots": None, "generated_at": None}
 
+# 每次点"更新"都会重置，记录这次抓取每一步发生了什么，方便直接从接口返回的
+# JSON 里看到失败原因，不用去翻 Railway 后台日志。
+_diagnostics: list[str] = []
+
+
+def _note(message: str) -> None:
+    _diagnostics.append(message)
+    logger.warning(message)
+
 
 def _today_str() -> str:
     return datetime.now().strftime("%Y.%m.%d")
@@ -186,13 +195,13 @@ def _fetch_from_tophub(client: httpx.Client, platform: str) -> list[dict[str, st
         )
         response.raise_for_status()
         payload = response.json()
-    except Exception:
-        logger.warning("tophub source failed: %s (%s)", platform, hashid, exc_info=True)
+    except Exception as exc:
+        _note(f"tophub 抓取失败 [{platform}]: {type(exc).__name__}: {exc}")
         return []
 
     raw_items = payload.get("data", {}).get("items") if isinstance(payload, dict) else None
     if not isinstance(raw_items, list):
-        logger.warning("Unexpected tophub response shape for %s: %r", platform, type(payload))
+        _note(f"tophub 返回格式异常 [{platform}]: {type(payload).__name__}")
         return []
 
     items: list[dict[str, str]] = []
@@ -216,13 +225,13 @@ def _fetch_from_dailyhot(client: httpx.Client, source: dict[str, str | None]) ->
         response = client.get(f"{HOT_API_BASE_URL}/{path}", timeout=8.0)
         response.raise_for_status()
         payload = response.json()
-    except Exception:
-        logger.warning("DailyHotApi source failed: %s", path, exc_info=True)
+    except Exception as exc:
+        _note(f"DailyHotApi 抓取失败 [{path}]: {type(exc).__name__}: {exc}")
         return []
 
     raw_items = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(raw_items, list):
-        logger.warning("Unexpected DailyHotApi response shape for %s: %r", path, type(payload))
+        _note(f"DailyHotApi 返回格式异常 [{path}]: {type(payload).__name__}")
         return []
 
     items: list[dict[str, str]] = []
@@ -254,6 +263,7 @@ def _fetch_exhibition_and_film_nodes() -> list[dict[str, str]]:
     looked up live via Claude's web-search tool. Best-effort: any failure
     just means 0 candidates from this source, never an error."""
     if not settings.has_anthropic_key:
+        _note("展会/影视/春秋假联网搜索跳过：未配置 ANTHROPIC_API_KEY")
         return []
 
     today_str = datetime.now().strftime("%Y年%m月%d日")
@@ -270,10 +280,11 @@ def _fetch_exhibition_and_film_nodes() -> list[dict[str, str]]:
         raw_text = extract_message_text(response)
         start, end = raw_text.find("["), raw_text.rfind("]")
         if start == -1 or end == -1 or end < start:
+            _note(f"展会/影视/春秋假联网搜索返回内容里没找到 JSON 数组，原始片段: {raw_text[:200]!r}")
             return []
         raw_items = json.loads(raw_text[start : end + 1])
-    except Exception:
-        logger.warning("Exhibition/film calendar lookup failed", exc_info=True)
+    except Exception as exc:
+        _note(f"展会/影视/春秋假联网搜索失败: {type(exc).__name__}: {exc}")
         return []
 
     if not isinstance(raw_items, list):
@@ -311,7 +322,13 @@ def _priority_node_to_entry(node: dict[str, Any]) -> dict[str, str]:
 
 
 def _build_live_hotspots() -> list[TodayHotspot]:
-    priority_raw = get_today_calendar_nodes() + _fetch_exhibition_and_film_nodes()
+    calendar_nodes = get_today_calendar_nodes()
+    _note(f"运营日历命中 {len(calendar_nodes)} 个节点: {[n['name'] for n in calendar_nodes]}")
+
+    exhibition_nodes = _fetch_exhibition_and_film_nodes()
+    _note(f"展会/影视/春秋假联网搜索命中 {len(exhibition_nodes)} 条")
+
+    priority_raw = calendar_nodes + exhibition_nodes
     matched: list[dict[str, str]] = [_priority_node_to_entry(node) for node in priority_raw[:PRIORITY_SLOT_CAP]]
     seen_titles: list[str] = [entry["title"] for entry in matched]
 
@@ -319,19 +336,25 @@ def _build_live_hotspots() -> list[TodayHotspot]:
         collected: list[dict[str, str]] = []
         with httpx.Client() as client:
             for source in SOURCE_PLATFORMS:
-                collected.extend(_fetch_platform(client, source)[:30])
+                items = _fetch_platform(client, source)
+                _note(f"{source['platform']} 原始抓取到 {len(items)} 条（tophub_key={'已配置' if settings.has_tophub_key else '未配置'}）")
+                collected.extend(items[:30])
 
+        category_matched = 0
+        duplicate_skipped = 0
         for item in collected:
             if len(matched) >= MAX_RESULTS:
                 break
 
             if _is_duplicate(item["title"], seen_titles):
+                duplicate_skipped += 1
                 continue
 
             rule = _match_category(item["title"])
             if rule is None:
                 continue
 
+            category_matched += 1
             seen_titles.append(item["title"])
             matched.append(
                 {
@@ -343,6 +366,9 @@ def _build_live_hotspots() -> list[TodayHotspot]:
                     "node_label": rule["node_label"],
                 }
             )
+        _note(f"品类命中 {category_matched} 条，去重跳过 {duplicate_skipped} 条")
+
+    _note(f"最终可用热点 {len(matched)} 条（至少需要 {MIN_RESULTS_TO_ACCEPT} 条才会展示真实数据）")
 
     if len(matched) < MIN_RESULTS_TO_ACCEPT:
         raise ValueError(f"Only found {len(matched)} usable hotspots, too few to show")
@@ -380,14 +406,18 @@ def get_today_hotspots_response() -> TodayHotspotsResponse:
 def refresh_today_hotspots() -> TodayHotspotsResponse:
     """Used by POST /refresh — the button handler. Always returns something
     displayable: real data on success, the simulated list on any failure."""
+    _diagnostics.clear()
+
     try:
         hotspots = _build_live_hotspots()
-    except Exception:
+    except Exception as exc:
         logger.exception("Hotspot refresh failed, falling back to simulated list")
+        _note(f"整体抓取失败，回退为示例数据: {type(exc).__name__}: {exc}")
         return TodayHotspotsResponse(
             hotspots=build_today_hotspots(),
             source="simulated",
             generated_at=None,
+            debug_notes=list(_diagnostics),
         )
 
     generated_at = datetime.now(timezone.utc).isoformat()
@@ -395,4 +425,11 @@ def refresh_today_hotspots() -> TodayHotspotsResponse:
     _cache["hotspots"] = hotspots
     _cache["generated_at"] = generated_at
 
-    return TodayHotspotsResponse(hotspots=hotspots, source="live", generated_at=generated_at)
+    return TodayHotspotsResponse(
+        hotspots=hotspots,
+        source="live",
+        generated_at=generated_at,
+        debug_notes=list(_diagnostics),
+    )
+
+
