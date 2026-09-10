@@ -58,7 +58,7 @@ from app.services.marketing_calendar import get_today_calendar_nodes
 
 logger = logging.getLogger(__name__)
 
-HOT_API_BASE_URL = "https://api-hot.imsyy.top"
+HOT_API_BASE_URL = "https://dailyhot-api-psi.vercel.app"  # 自建实例，替代已停摆的官方免费示例站
 TOPHUB_API_BASE_URL = "https://api.tophubdata.com"
 
 # tophub 的 hashid 是固定不变的目录 ID，不是密钥，可以放心写死在代码里。
@@ -435,9 +435,4 @@ def refresh_today_hotspots() -> TodayHotspotsResponse:
         generated_at=generated_at,
         debug_notes=list(_diagnostics),
     )
-
-
-
-
-
 
