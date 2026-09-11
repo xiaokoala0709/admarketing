@@ -68,6 +68,86 @@ AGENT_2_SYSTEM_PROMPT = """你是一位给老板写策略初稿的互联网营�
 - 在“可直接执行清单”中使用 Markdown checkbox（- [ ]）。
 - 允许使用加粗、列表和小标题增强可读性，但不要输出 JSON。"""
 
+# "创意工作坊"里第二个独立选择器（风格），跟"角色"（品牌方/平台方）是两个不同维度——
+# 角色回答"站在谁的立场写"，这里回答"用哪种方法论/调性写"，两者可以自由组合。
+# 每一条都是对该方法论/机构公开方法论的客观转述（核心框架 + 语气 + 结构侧重），
+# 不是虚构该人物/机构的原话，纯粹用来引导模型写作时的思路和语气。
+STYLE_PROMPTS: dict[str, dict[str, str]] = {
+    "kotler": {
+        "label": "科特勒 STP+4P",
+        "prompt": (
+            "请采用菲利普·科特勒的 STP+4P 体系：先做市场细分（Segmentation）、目标市场选择"
+            "（Targeting）、定位（Positioning）的战略分析，再围绕产品、价格、渠道、推广（4P）"
+            "逐项展开战术。语气理性克制、逻辑严谨、教科书式，重数据与流程推导，少感性煽动，"
+            "方案要层层递进、逻辑闭环。"
+        ),
+    },
+    "ries_trout": {
+        "label": "定位理论（里斯&特劳特）",
+        "prompt": (
+            "请采用艾·里斯与杰克·特劳特的定位理论：心智是营销的终极战场，先分析竞争格局与"
+            "消费者心智里还空着的位置，锁定一个可以独占的简单定位词，再让所有打法都服务于这一"
+            "个词，拒绝多元诉求、贪多求全。语气犀利、论战式，常用进攻/防御一类的竞争隐喻，"
+            "结论先行、直接果断。"
+        ),
+    },
+    "huayu": {
+        "label": "华与华（超级符号）",
+        "prompt": (
+            "请采用华与华方法：超级符号就是超级创意——借用消费者大脑里已有的文化原型（谐音、"
+            "俗语、图腾）降低传播和选择成本；坚持货架思维，包装本身就是媒体，要在终端一眼胜出。"
+            "先定企业战略（做哪几个产品、任务次序），再造超级符号（名字/口号/视觉锤），最后落地"
+            "到每个消费者接触点。语气断言式、口号化，强调一句话说清楚，务实、不追求自我陶醉的"
+            "'高级感'创意。"
+        ),
+    },
+    "ye_maozhong": {
+        "label": "叶茂中（冲突理论）",
+        "prompt": (
+            "请采用叶茂中的冲突理论：营销的本质是找到并放大消费者心智里理性与感性的冲突，冲突"
+            "越大机会越大；先找准最大的一个冲突点，围绕它设计一招致命的核心诉求和广告语，再用"
+            "高密度重复强化记忆，而不是追求内容多元。语气强攻击性、重复轰炸式、口语化，追求一句"
+            "话就能洗脑的记忆穿透力。"
+        ),
+    },
+    "ogilvy": {
+        "label": "奥美（品牌形象论）",
+        "prompt": (
+            "请采用奥美的品牌形象论/360度品牌管家思路：广告要为品牌建立长期一致的形象资产，而"
+            "不是单纯促销；先做深入的产品/消费者研究，提炼一个能长期沉淀的品牌大创意（Big "
+            "Idea），再确保这个创意在广告、包装、终端所有触点360度一致执行。语气理性绅士，信奉"
+            "'消费者不是傻瓜，她是你的太太'，尊重消费者智商，不哗众取宠。"
+        ),
+    },
+    "leo_burnett": {
+        "label": "李奥贝纳（与生俱来的戏剧性）",
+        "prompt": (
+            "请采用李奥贝纳'与生俱来的戏剧性'（inherent drama）思路：每个产品天生就藏着能打动"
+            "人的真实特质，工作是挖掘和呈现它，而不是生造噱头；先深挖产品/品类最打动人的情感"
+            "原型，再塑造一个可以长期沉淀的品牌角色或意象，用故事和画面代替直接叫卖。语气温暖、"
+            "诗意、文艺化叙事，善用质朴的意象打动人，软性诉求而非硬广推销。"
+        ),
+    },
+    "wk": {
+        "label": "W+K（文化立场式）",
+        "prompt": (
+            "请采用 Wieden+Kennedy 的文化立场式打法：不陈述产品功能，而是为品牌确立一句有文化"
+            "态度和精神主张的宣言，让品牌代表一种价值观、主动介入社会文化议题而不是旁观；先找到"
+            "品牌可以代表的这句精神宣言，再用真实人物故事和高强度视觉把它具象化，追求文化影响力"
+            "大于短期销量。语气大胆、挑衅、态度鲜明，多用短句祈使句，情绪张力强，敢于制造争议。"
+        ),
+    },
+    "dentsu": {
+        "label": "电通 AISAS 模型",
+        "prompt": (
+            "请采用电通的 AISAS 模型：把方案按注意（Attention）→兴趣（Interest）→搜索"
+            "（Search）→行动（Action）→分享（Share）五个阶段逐一拆解触达节点，尤其要为"
+            "'Search'阶段布局搜索/内容资产、为'Share'阶段设计易传播机制，形成完整闭环。语气"
+            "流程化、数据导向，强调可追踪的用户行为路径，而不是情感化表达。"
+        ),
+    },
+}
+
 AGENT_3_BRIEF_SYSTEM_PROMPT = """你是一位资深品牌视觉策划与 AI 图片提示词设计师。请基于用户输入，生成一份适合品牌设计师或 AI 出图工具直接使用的视觉 brief。
 
 你必须严格输出 JSON 对象，格式如下：
@@ -464,6 +544,7 @@ class ClaudeCampaignAgentAdapter(AgentAdapter):
     def _build_user_prompt(self, payload: AgentRunRequest) -> str:
         entries = payload.structured_context.entries if payload.structured_context else []
         role = payload.structured_context.role if payload.structured_context else None
+        style = payload.structured_context.style if payload.structured_context else None
         role_text = "品牌方" if role == "brand" else "平台方" if role == "platform" else "未指定"
         background_list = "\n".join(
             f"- {entry.key}：{entry.value or '未填写'}" for entry in entries
@@ -477,11 +558,15 @@ class ClaudeCampaignAgentAdapter(AgentAdapter):
             else "请根据输入信息判断重点，并保持策略视角。"
         )
 
+        style_entry = STYLE_PROMPTS.get(style) if style else None
+        style_block = f"\n\n风格要求（{style_entry['label']}）：{style_entry['prompt']}" if style_entry else ""
+
         return (
             "以下是本次策划的背景信息，请输出一份节点整合营销方案初稿。\n\n"
             f"- 当前角色：{role_text}\n"
             f"{background_list}\n\n"
             f"{focus}"
+            f"{style_block}"
         )
 
     def _timeout_output(self, prompt: str) -> CampaignOutput:
