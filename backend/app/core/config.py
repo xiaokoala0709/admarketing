@@ -57,5 +57,16 @@ class Settings:
     def has_tophub_key(self) -> bool:
         return bool(self.tophub_access_key)
 
+    @property
+    def newsnow_base_url(self) -> str:
+        # 自建 newsnow (github.com/ourongxing/newsnow) 实例的地址，没有官方免费
+        # 公共站可用，必须自己部署后把域名填进这个环境变量，不填就跳过这个数据源。
+        return os.getenv("NEWSNOW_BASE_URL", "").strip().rstrip("/")
+
+    @property
+    def has_newsnow_base_url(self) -> bool:
+        return bool(self.newsnow_base_url)
+
 
 settings = Settings()
+
