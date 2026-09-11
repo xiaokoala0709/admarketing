@@ -239,7 +239,22 @@ function buildCampaignPrompt(role, form) {
     .join('\n')
 }
 
-function buildCampaignPayload(role, form) {
+// "创意工作坊"里第二个独立选择器：跟角色（品牌方/平台方，站在谁的立场写）不同，
+// 这里选的是"用哪种方法论/调性写"，两者可以自由组合。key 要跟后端
+// agent_adapters.py 里 STYLE_PROMPTS 的 key 完全对应。
+const CAMPAIGN_STYLE_OPTIONS = [
+  { key: '', label: '不指定风格（默认）' },
+  { key: 'kotler', label: '科特勒 STP+4P' },
+  { key: 'ries_trout', label: '定位理论（里斯&特劳特）' },
+  { key: 'huayu', label: '华与华（超级符号）' },
+  { key: 'ye_maozhong', label: '叶茂中（冲突理论）' },
+  { key: 'ogilvy', label: '奥美（品牌形象论）' },
+  { key: 'leo_burnett', label: '李奥贝纳（与生俱来的戏剧性）' },
+  { key: 'wk', label: 'W+K（文化立场式）' },
+  { key: 'dentsu', label: '电通 AISAS 模型' },
+]
+
+function buildCampaignPayload(role, form, style) {
   const entries = buildCampaignPromptEntries(role, form).map(([key, value]) => ({
     key,
     value,
@@ -249,6 +264,7 @@ function buildCampaignPayload(role, form) {
     prompt: buildCampaignPrompt(role, form),
     structured_context: {
       role,
+      style: style || null,
       entries,
     },
   }
@@ -662,6 +678,8 @@ function BriefPage({
 function WorkshopPage({
   campaignRole,
   setCampaignRole,
+  campaignStyle,
+  setCampaignStyle,
   campaignBrandForm,
   setCampaignBrandForm,
   campaignPlatformForm,
@@ -713,7 +731,7 @@ function WorkshopPage({
     setCampaignAdjustmentNote('')
 
     try {
-      const result = await runAgent('agent_2', buildCampaignPayload(campaignRole, source))
+      const result = await runAgent('agent_2', buildCampaignPayload(campaignRole, source, campaignStyle))
       setCampaignOutput(result.output)
       setCampaignError('')
     } catch (error) {
@@ -914,6 +932,22 @@ function WorkshopPage({
               >
                 平台方
               </button>
+            </div>
+
+            <div className="style-select-row">
+              <label htmlFor="campaign-style-select">写作风格（可选）</label>
+              <select
+                id="campaign-style-select"
+                className="style-select"
+                value={campaignStyle}
+                onChange={(event) => setCampaignStyle(event.target.value)}
+              >
+                {CAMPAIGN_STYLE_OPTIONS.map((option) => (
+                  <option key={option.key || 'none'} value={option.key}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="template-card">{renderCampaignTemplate()}</div>
@@ -1465,6 +1499,7 @@ function AppShell() {
   const [hotspotsError, setHotspotsError] = useState('')
   const [copied, setCopied] = useState(false)
   const [campaignRole, setCampaignRole] = useState('brand')
+  const [campaignStyle, setCampaignStyle] = useState('')
   const [campaignBrandForm, setCampaignBrandForm] = useState(defaultCampaignBrandForm)
   const [campaignPlatformForm, setCampaignPlatformForm] = useState(defaultCampaignPlatformForm)
   const [campaignOutput, setCampaignOutput] = useState(null)
@@ -1628,6 +1663,8 @@ function AppShell() {
             <WorkshopPage
               campaignRole={campaignRole}
               setCampaignRole={setCampaignRole}
+              campaignStyle={campaignStyle}
+              setCampaignStyle={setCampaignStyle}
               campaignBrandForm={campaignBrandForm}
               setCampaignBrandForm={setCampaignBrandForm}
               campaignPlatformForm={campaignPlatformForm}
