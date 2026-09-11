@@ -17,8 +17,14 @@ Two independent kinds of hotspot candidates, combined into one list
    a brand-angle entry point — so these are placed first, up to
    PRIORITY_SLOT_CAP slots.
 2. Real scraped platform hotspots (微博 / 微信 / 今日头条 / 百度), filtered to
-   the priority product categories (美妆个护 / 运动户外 / 酒类 / 母婴用品 /
-   潮玩零食) and deduped, filling the remaining slots up to MAX_RESULTS.
+   a broad set of 快消 (FMCG) product categories (see CATEGORY_RULES below —
+   美妆个护 / 酒类 / 母婴用品 / 潮玩文创 / 食品饮料 / 家清家居 / 运动户外 /
+   服饰穿搭 / 3C数码 / 宠物用品) and deduped, filling the remaining slots up
+   to MAX_RESULTS. Even with this broad a category list, a lot of real-world
+   hot searches are still pure news/social-event stories with no commercial
+   angle at all — on a day like that, category_matched can legitimately be
+   0 and refresh_today_hotspots falls back to the simulated list. That's
+   the quality gate working as intended, not a bug.
 
 Scraped-platform data sources, tried in order per platform
 ------------------------------------------------------------
@@ -97,18 +103,14 @@ NEWSNOW_SOURCE_IDS: dict[str, str] = {
     "百度": "baidu",
 }
 
-# 品类关键词库：命中才认为这条热点"适合品牌借势"，按品牌要求重点覆盖这五个品类，
-# 过滤掉政治/社会新闻/娱乐八卦等不在这些品类里的内容。可以按需要继续加词。
+# 品类关键词库：命中才认为这条热点"适合品牌借势"，过滤掉政治/社会新闻/娱乐八卦等
+# 不在快消（FMCG）范围内的内容。原来只覆盖品牌最初重点的5个品类，命中率偏低——
+# 按用户要求"罗列所有快消品类"扩到覆盖更全的快消大盘，能接住的热点自然更多。
+# 可以按需要继续加词；排在前面的规则优先命中（同一条标题只会算进一个品类）。
 CATEGORY_RULES: list[dict[str, Any]] = [
     {
-        "keywords": ["美妆", "护肤", "彩妆", "口红", "香水", "面膜", "精华", "粉底", "防晒霜", "身体乳", "香氛", "美容", "洗护"],
+        "keywords": ["美妆", "护肤", "彩妆", "口红", "香水", "面膜", "精华", "粉底", "防晒霜", "身体乳", "香氛", "美容", "洗护", "唇釉", "眼影", "护发", "洗发水", "沐浴露", "防晒"],
         "category": "美妆个护",
-        "node_type": "lifestyle_trend",
-        "node_label": "生活趋势",
-    },
-    {
-        "keywords": ["运动", "健身", "跑步", "瑜伽", "户外", "露营", "登山", "骑行", "滑雪", "徒步", "马拉松", "运动装备", "球鞋"],
-        "category": "运动户外",
         "node_type": "lifestyle_trend",
         "node_label": "生活趋势",
     },
@@ -119,14 +121,50 @@ CATEGORY_RULES: list[dict[str, Any]] = [
         "node_label": "生活趋势",
     },
     {
-        "keywords": ["母婴", "育儿", "宝宝", "婴儿", "奶粉", "纸尿裤", "儿童", "亲子", "孕妈", "新生儿"],
+        "keywords": ["母婴", "育儿", "宝宝", "婴儿", "奶粉", "纸尿裤", "儿童", "亲子", "孕妈", "新生儿", "辅食", "童装"],
         "category": "母婴用品",
         "node_type": "lifestyle_trend",
         "node_label": "生活趋势",
     },
     {
-        "keywords": ["潮玩", "盲盒", "手办", "谷子", "周边", "零食", "休闲食品", "辣条", "软糖", "薯片"],
-        "category": "潮玩零食",
+        "keywords": ["潮玩", "盲盒", "手办", "谷子", "周边", "IP联名", "痛包", "拍卡", "收藏玩具"],
+        "category": "潮玩文创",
+        "node_type": "lifestyle_trend",
+        "node_label": "生活趋势",
+    },
+    {
+        "keywords": ["零食", "休闲食品", "辣条", "软糖", "薯片", "饮料", "奶茶", "咖啡", "茶饮", "轻食", "代餐", "酸奶", "乳制品", "气泡水", "预制菜", "速食", "即食", "烘焙", "低糖", "零卡"],
+        "category": "食品饮料",
+        "node_type": "lifestyle_trend",
+        "node_label": "生活趋势",
+    },
+    {
+        "keywords": ["家清", "洗衣液", "洗洁精", "消毒", "清洁剂", "收纳", "家居", "香薰", "除螨", "厨房清洁", "湿巾", "家务"],
+        "category": "家清家居",
+        "node_type": "lifestyle_trend",
+        "node_label": "生活趋势",
+    },
+    {
+        "keywords": ["运动", "健身", "跑步", "瑜伽", "户外", "露营", "登山", "骑行", "滑雪", "徒步", "马拉松", "运动装备", "球鞋", "旅行", "出行", "自驾", "野餐", "飞盘"],
+        "category": "运动户外",
+        "node_type": "lifestyle_trend",
+        "node_label": "生活趋势",
+    },
+    {
+        "keywords": ["穿搭", "服饰", "卫衣", "防晒衣", "冲锋衣", "箱包", "潮牌", "联名款"],
+        "category": "服饰穿搭",
+        "node_type": "lifestyle_trend",
+        "node_label": "生活趋势",
+    },
+    {
+        "keywords": ["数码", "耳机", "智能手表", "充电宝", "小家电", "平板电脑", "手机壳"],
+        "category": "3C数码",
+        "node_type": "lifestyle_trend",
+        "node_label": "生活趋势",
+    },
+    {
+        "keywords": ["宠物", "猫粮", "狗粮", "萌宠", "铲屎官"],
+        "category": "宠物用品",
         "node_type": "lifestyle_trend",
         "node_label": "生活趋势",
     },
@@ -492,4 +530,5 @@ def refresh_today_hotspots() -> TodayHotspotsResponse:
         generated_at=generated_at,
         debug_notes=list(_diagnostics),
     )
+
 
