@@ -188,9 +188,13 @@ EXHIBITION_FILM_SYSTEM_PROMPT = """你是品牌营销日历助手。请联网搜
 如果没有找到合适的，返回空数组 []。"""
 
 DUPLICATE_SIMILARITY_THRESHOLD = 0.45
-MIN_RESULTS_TO_ACCEPT = 3
+# 原来是3，但运营日历节点本身就是真实内容（不是抓来的，是日期算出来的），只因为
+# 平台热点一条没命中品类就要连日历节点一起藏起来、换成全假的示例数据，有点浪费。
+# 降到2之后：只要运营日历命中了至少2个节点（或者日历+品类命中总共凑够2条），
+# 就展示真实数据，不会因为品类过滤这一步偏严格就整体回退。
+MIN_RESULTS_TO_ACCEPT = 2
 MAX_RESULTS = 5
-PRIORITY_SLOT_CAP = 2  # 日历节点 + 展会/影视/春秋假 最多占用几个坑位，剩下至少3个留给抓取到的真实热点
+PRIORITY_SLOT_CAP = 2  # 日历节点 + 展会/影视/春秋假 最多占用几个坑位，剩下留给抓取到的真实热点
 
 _cache: dict[str, Any] = {"date": None, "hotspots": None, "generated_at": None}
 
