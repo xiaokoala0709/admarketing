@@ -19,6 +19,18 @@ class AgentPromptEntry(BaseModel):
 
 class AgentStructuredContext(BaseModel):
     role: Literal["brand", "platform"] | None = None
+    # 独立于 role 的第二个维度："用哪种方法论/调性写"，跟 role（站在谁的立场写）
+    # 可以自由组合。取值对应 agent_adapters.py 里 STYLE_PROMPTS 的 key。
+    style: Literal[
+        "kotler",
+        "ries_trout",
+        "huayu",
+        "ye_maozhong",
+        "ogilvy",
+        "leo_burnett",
+        "wk",
+        "dentsu",
+    ] | None = None
     entries: list[AgentPromptEntry] = Field(default_factory=list)
 
 
@@ -97,6 +109,7 @@ class TodayHotspot(BaseModel):
         "lifestyle_trend",
         "exhibition",
         "film_release",
+        "domestic_observance",
     ]
     node_label: str
 
@@ -119,4 +132,5 @@ class AgentRunResponse(BaseModel):
     status: str
     output: str | CampaignOutput | HotspotOutput | BrandAssetBriefOutput | ImageGenerateOutput
     metadata: dict[str, Any] = Field(default_factory=dict)
+
 
