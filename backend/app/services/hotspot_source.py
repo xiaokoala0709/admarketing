@@ -33,8 +33,18 @@ Scraped-platform data sources, tried in order per platform
    tophub isn't configured, or as the fallback when a specific tophub call
    fails. Doesn't cover 微信, so that platform silently contributes nothing
    when tophub isn't configured — the other 3 platforms carry the list.
-3. The existing simulated (mock) list — used if neither source above,
-   combined with the calendar nodes, yields enough results overall, so the
+3. newsnow (https://github.com/ourongxing/newsnow) — another free,
+   self-hosted, open-source aggregator, tried only if DailyHotApi returned
+   nothing for that platform AND NEWSNOW_BASE_URL is configured (no public
+   demo站可用，必须自己部署). Exists mainly to give 微博/百度 a second chance
+   when our self-hosted DailyHotApi instance fails on them (微博 hits a
+   403 from Sina blocking non-mainland IPs; 百度 comes back malformed) —
+   but note newsnow's 微博 scraper hits the *same* upstream
+   (s.weibo.com/top/summary), just with an extra Cookie header, so there's
+   no guarantee it actually dodges the same IP block. Worth trying since
+   it's free either way.
+4. The existing simulated (mock) list — used if none of the sources above,
+   combined with the calendar nodes, yield enough results overall, so the
    page never errors out.
 
 Everything here fails soft: if a platform request fails, we just skip it
@@ -78,6 +88,14 @@ SOURCE_PLATFORMS: list[dict[str, str | None]] = [
     {"platform": "百度", "dailyhot_path": "baidu"},
     {"platform": "微信", "dailyhot_path": None},
 ]
+
+# newsnow 的 source id，同样是 None 表示没有这个平台（微信不在 newsnow 覆盖范围内，
+# 跟 tophub/DailyHotApi 不是同一套命名，单独维护一份映射）。
+NEWSNOW_SOURCE_IDS: dict[str, str] = {
+    "微博": "weibo",
+    "今日头条": "toutiao",
+    "百度": "baidu",
+}
 
 # 品类关键词库：命中才认为这条热点"适合品牌借势"，按品牌要求重点覆盖这五个品类，
 # 过滤掉政治/社会新闻/娱乐八卦等不在这些品类里的内容。可以按需要继续加词。
@@ -247,16 +265,54 @@ def _fetch_from_dailyhot(client: httpx.Client, source: dict[str, str | None]) ->
     return items
 
 
+def _fetch_from_newsnow(client: httpx.Client, platform: str) -> list[dict[str, str]]:
+    source_id = NEWSNOW_SOURCE_IDS.get(platform)
+    if not source_id or not settings.has_newsnow_base_url:
+        return []
+
+    try:
+        response = client.get(
+            f"{settings.newsnow_base_url}/api/s",
+            params={"id": source_id, "latest": "true"},
+            timeout=8.0,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        _note(f"newsnow 抓取失败 [{platform}]: {type(exc).__name__}: {exc}")
+        return []
+
+    raw_items = payload.get("items") if isinstance(payload, dict) else None
+    if not isinstance(raw_items, list):
+        _note(f"newsnow 返回格式异常 [{platform}]: {json.dumps(payload, ensure_ascii=False)[:300]}")
+        return []
+
+    items: list[dict[str, str]] = []
+    for raw in raw_items:
+        if not isinstance(raw, dict):
+            continue
+        title = str(raw.get("title") or "").strip()
+        if not title:
+            continue
+        items.append({"title": title, "platform": platform})
+
+    return items
+
+
 def _fetch_platform(client: httpx.Client, source: dict[str, str | None]) -> list[dict[str, str]]:
-    """Try tophub first (only if a key is configured), fall back to
-    DailyHotApi for this same platform if tophub isn't configured, fails,
-    or (for 微信) doesn't exist on DailyHotApi at all."""
+    """Try tophub first (only if a key is configured), then DailyHotApi,
+    then newsnow (only if configured) as a last-resort second opinion for
+    whatever DailyHotApi couldn't get for this platform."""
     if settings.has_tophub_key:
         items = _fetch_from_tophub(client, source["platform"])
         if items:
             return items
 
-    return _fetch_from_dailyhot(client, source)
+    items = _fetch_from_dailyhot(client, source)
+    if items:
+        return items
+
+    return _fetch_from_newsnow(client, source["platform"])
 
 
 def _fetch_exhibition_and_film_nodes() -> list[dict[str, str]]:
@@ -325,6 +381,7 @@ def _priority_node_to_entry(node: dict[str, Any]) -> dict[str, str]:
 def _build_live_hotspots() -> list[TodayHotspot]:
     key_len = len(settings.tophub_access_key)
     _note(f"TOPHUB_ACCESS_KEY 状态: has_tophub_key={settings.has_tophub_key}, 长度={key_len}")
+    _note(f"NEWSNOW_BASE_URL 状态: has_newsnow_base_url={settings.has_newsnow_base_url}, 值={settings.newsnow_base_url or '(未配置)'}")
 
     calendar_nodes = get_today_calendar_nodes()
     _note(f"运营日历命中 {len(calendar_nodes)} 个节点: {[n['name'] for n in calendar_nodes]}")
